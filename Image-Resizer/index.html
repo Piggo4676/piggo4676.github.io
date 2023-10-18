@@ -20,6 +20,7 @@
     <span id="sliderValue">100%</span>
   </form>
   <div id="output"></div>
+  <a id="downloadLink" style="display: none;">Download Resized Image</a>
 
   <script>
     function handleFileSelect(event) {
@@ -55,6 +56,11 @@
       const output = document.getElementById('output');
       output.innerHTML = '';
       output.appendChild(canvas);
+
+      const downloadLink = document.getElementById('downloadLink');
+      downloadLink.href = canvas.toDataURL(); // Set the data URL for the download link
+      downloadLink.download = 'resized_image.png'; // Set the filename for the download
+      downloadLink.style.display = 'block'; // Make the download link visible
     }
 
     function updateSliderValue() {

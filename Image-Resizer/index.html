@@ -15,6 +15,9 @@
   <h1>Image Resizer</h1>
   <form>
     <input type="file" accept="image/*" id="fileInput" onchange="handleFileSelect(event)">
+    <label for="resizeSlider">Resize Percentage:</label>
+    <input type="range" min="10" max="200" value="100" class="slider" id="resizeSlider" oninput="updateSliderValue()">
+    <span id="sliderValue">100%</span>
   </form>
   <div id="output"></div>
 
@@ -28,36 +31,41 @@
         img.src = e.target.result;
 
         img.onload = function() {
-          const canvas = document.createElement('canvas');
-          const ctx = canvas.getContext('2d');
-
-          // Calculate new dimensions (you can adjust maxWidth and maxHeight as needed)
-          const maxWidth = 800;
-          const maxHeight = 600;
-          let newWidth = img.width;
-          let newHeight = img.height;
-
-          if (img.width > maxWidth) {
-            newWidth = maxWidth;
-            newHeight = (img.height * maxWidth) / img.width;
-          }
-
-          if (newHeight > maxHeight) {
-            newHeight = maxHeight;
-            newWidth = (img.width * maxHeight) / img.height;
-          }
-
-          canvas.width = newWidth;
-          canvas.height = newHeight;
-          ctx.drawImage(img, 0, 0, newWidth, newHeight);
-
-          const output = document.getElementById('output');
-          output.innerHTML = '';
-          output.appendChild(canvas);
+          resizeImage(img);
         }
       }
 
       reader.readAsDataURL(file);
+    }
+
+    function resizeImage(img) {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+
+      const percentage = document.getElementById('resizeSlider').value;
+      const scaleFactor = percentage / 100;
+
+      const newWidth = img.width * scaleFactor;
+      const newHeight = img.height * scaleFactor;
+
+      canvas.width = newWidth;
+      canvas.height = newHeight;
+      ctx.drawImage(img, 0, 0, newWidth, newHeight);
+
+      const output = document.getElementById('output');
+      output.innerHTML = '';
+      output.appendChild(canvas);
+    }
+
+    function updateSliderValue() {
+      const slider = document.getElementById('resizeSlider');
+      const sliderValue = document.getElementById('sliderValue');
+      sliderValue.textContent = slider.value + '%';
+
+      const img = document.querySelector('#output img');
+      if (img) {
+        resizeImage(img);
+      }
     }
   </script>
 </body>

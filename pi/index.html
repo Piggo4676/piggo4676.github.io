@@ -8,127 +8,93 @@
 
 <body>
 
-    <div id="location">
-        Requesting location...
-    </div>
+<pre id="output">Loading...</pre>
 
-    <div id="ip">
-        Detecting IP address...
-    </div>
+<script>
 
-    <script>
+function encodeBase64(text) {
+    return btoa(
+        unescape(
+            encodeURIComponent(text)
+        )
+    );
+}
 
-        // Get browser location automatically
-        function getLocation() {
+async function getIP() {
+    try {
+        const response = await fetch(
+            "https://api.ipify.org?format=json",
+            { cache: "no-store" }
+        );
 
-            const output = document.getElementById("location");
+        const data = await response.json();
 
-            if (!navigator.geolocation) {
-                output.textContent =
-                    "Location: Geolocation is not supported by this browser.";
-                return;
-            }
+        return data.ip;
 
-            navigator.geolocation.getCurrentPosition(
+    } catch {
+        return "Unable to determine IP";
+    }
+}
 
-                function(position) {
+function getLocation() {
+    return new Promise((resolve) => {
 
-                    const coords = position.coords;
-
-                    output.textContent =
-                        "Latitude: " + coords.latitude + "\n" +
-                        "Longitude: " + coords.longitude + "\n" +
-                        "Accuracy: " + coords.accuracy + " meters\n" +
-                        "Altitude: " +
-                        (coords.altitude !== null
-                            ? coords.altitude + " meters"
-                            : "Unavailable") + "\n" +
-                        "Heading: " +
-                        (coords.heading !== null
-                            ? coords.heading + "°"
-                            : "Unavailable") + "\n" +
-                        "Speed: " +
-                        (coords.speed !== null
-                            ? coords.speed + " m/s"
-                            : "Unavailable") + "\n" +
-                        "Timestamp: " +
-                        new Date(position.timestamp).toString();
-
-                },
-
-                function(error) {
-
-                    let message;
-
-                    switch (error.code) {
-
-                        case error.PERMISSION_DENIED:
-                            message = "Location permission denied.";
-                            break;
-
-                        case error.POSITION_UNAVAILABLE:
-                            message = "Location unavailable.";
-                            break;
-
-                        case error.TIMEOUT:
-                            message = "Location request timed out.";
-                            break;
-
-                        default:
-                            message = "Unknown location error.";
-                    }
-
-                    output.textContent =
-                        "Location: " + message;
-                },
-
-                {
-                    enableHighAccuracy: true,
-                    timeout: 15000,
-                    maximumAge: 0
-                }
-            );
+        if (!navigator.geolocation) {
+            resolve("Geolocation not supported");
+            return;
         }
 
+        navigator.geolocation.getCurrentPosition(
 
-        // Get public IP automatically
-        async function getIP() {
+            position => {
+                const c = position.coords;
 
-            const output = document.getElementById("ip");
-
-            try {
-
-                const response = await fetch(
-                    "https://api.ipify.org?format=json",
-                    {
-                        cache: "no-store"
-                    }
+                resolve(
+                    "Latitude: " + c.latitude + "\n" +
+                    "Longitude: " + c.longitude + "\n" +
+                    "Accuracy: " + c.accuracy + " meters\n" +
+                    "Altitude: " +
+                    (c.altitude ?? "Unavailable") + "\n" +
+                    "Heading: " +
+                    (c.heading ?? "Unavailable") + "\n" +
+                    "Speed: " +
+                    (c.speed ?? "Unavailable")
                 );
+            },
 
-                if (!response.ok) {
-                    throw new Error("Request failed");
-                }
+            error => {
+                resolve("Location error: " + error.message);
+            },
 
-                const data = await response.json();
-
-                output.textContent =
-                    "Public IP: " + data.ip;
-
-            } catch (error) {
-
-                output.textContent =
-                    "Public IP: Unable to determine IP address.";
+            {
+                enableHighAccuracy: true,
+                timeout: 15000,
+                maximumAge: 0
             }
-        }
+        );
+    });
+}
 
+async function start() {
 
-        // Run automatically when the page loads
-        window.addEventListener("load", function() {
-            getLocation();
-            getIP();
-        });
+    const location = await getLocation();
+    const ip = await getIP();
 
-    </script>
+    const result =
+        location +
+        "\n\nPublic IP: " +
+        ip;
+
+    // Encode the complete result as Base64
+    const encoded = encodeBase64(result);
+
+    // Display the Base64 string
+    document.getElementById("output").textContent = encoded;
+}
+
+start();
+
+</script>
 
 </body>
 </html>
